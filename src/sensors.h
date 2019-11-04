@@ -19,6 +19,8 @@ public:
 	
 	unsigned short currentAdcValue = 0;
 
+	unsigned short averageAdcValue = 0;
+	float alpha = 0.1;
 
 	AnalogIn* myInputPin;
 	

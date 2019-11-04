@@ -2,7 +2,9 @@
 #include "constants.h"
 #include "sensors.h"
 #include "output.h"
-//#define FeedbackSupport
+#define FeedbackSupport
+
+#ifdef FeedbackSupport
 
 bool servoDelayTimerRunning = false;
 Timer servoDelayTimer;
@@ -15,7 +17,7 @@ bool appsPlausible = true;
 bool tpsPlausible = true;
 bool setAngleMatchesReal = true;
 
-#ifdef FeedbackSupport
+
 
 bool CheckSensorPlausability(Sensor* sensor1, Sensor* sensor2){
    if(abs((sensor1->actuationPercentage)-(sensor2->actuationPercentage)) > AngleTolerance){
@@ -34,12 +36,14 @@ bool EntryIsPlausible(bool plausability, Timer* timerPointer, bool& timerRunning
     else {
       timerRunning = true;
       timerPointer->start();
+      return true;
     }
   }
   else if (timerRunning){
     timerRunning = false;
     timerPointer->stop();
     timerPointer->reset();
+    return false;
   }
   return true;
 }
@@ -48,7 +52,7 @@ bool TimerErrors(){
   bool appsFine = EntryIsPlausible(appsPlausible, &implausabilityAPPSTimer, implausabilityAPPSTimerRunning, ImplausabilityIntervalMS);
   bool tpsFine = EntryIsPlausible(tpsPlausible, &implausabilityTPSTimer, implausabilityTPSTimerRunning, ImplausabilityIntervalMS);
   bool servoFine = EntryIsPlausible(setAngleMatchesReal, &servoDelayTimer, servoDelayTimerRunning, PositionMustBeReachedIn);
-  return appsFine||tpsFine||servoFine;
+  return !(appsFine&&tpsFine&&servoFine);
 }
 #endif
 
@@ -91,8 +95,7 @@ int main() {
 
 #endif
     servoOut.setThrottleAngle(servoSetAngle);
-
-    
+  
   }
 
 }

@@ -3,13 +3,15 @@
 
 float Sensor::getCurrentAngle() {
 	getAdcValue();
-	currentAngle = (currentAdcValue / unitsPerDegree) - startAngle;
+	currentAngle = (averageAdcValue / unitsPerDegree) - startAngle;
 	actuationPercentage = currentAngle/usableAngleRange;
 	return currentAngle;
 }
 
 unsigned short Sensor::getAdcValue() {
 	currentAdcValue = myInputPin->read_u16();
+	averageAdcValue = (alpha * currentAdcValue) + (1.0 - alpha) * averageAdcValue;
+
 	return currentAdcValue;
 }
 
