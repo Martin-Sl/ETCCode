@@ -1,11 +1,27 @@
-
+#define AngleDebug
 #include "sensors.h"
 
 float Sensor::getCurrentAngle() {
 	getAdcValue();
-	currentAngle = (averageAdcValue / unitsPerDegree) - startAngle;
-	actuationPercentage = currentAngle/usableAngleRange;
-	return currentAngle;
+	if(invertReading){
+		averageAngle = totalAngleRange - ((averageAdcValue - adcAtNoTurnAngleOffset) / unitsPerDegree) - startAngle;
+	}
+	else{
+		averageAngle = ((averageAdcValue - adcAtNoTurnAngleOffset) / unitsPerDegree) - startAngle;
+	}
+	
+#ifdef AngleDebug
+	volatile float currentAngle = 0;
+	if(invertReading){
+		currentAngle = totalAngleRange - ((currentAdcValue - adcAtNoTurnAngleOffset) / unitsPerDegree) - startAngle;;
+	}
+	else{
+		currentAngle = ((currentAdcValue - adcAtNoTurnAngleOffset) / unitsPerDegree) - startAngle;
+	}
+	
+#endif
+	actuationPercentage = averageAngle/usableAngleRange;
+	return averageAngle;
 }
 
 unsigned short Sensor::getAdcValue() {
@@ -16,7 +32,7 @@ unsigned short Sensor::getAdcValue() {
 }
 
 bool Sensor::isInRange(){
-	if(currentAngle > 0 && currentAngle > usableAngleRange){
+	if(averageAngle > 0 && averageAngle > usableAngleRange){
 		return true;
 	}
 	return false;

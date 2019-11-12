@@ -10,7 +10,7 @@ public:
 	unsigned short shortestPulse = 900;
 	float servoTotalAngle = 135;
 	float throttleAngleRange = ThrottleAngleRange;
-	float servoFullClosedAngle = 10;
+	float servoFullClosedAngle = 15;
 	float servoFullOpenAngle = servoFullClosedAngle + throttleAngleRange;
 	float servoAbsoluteAngle = servoFullClosedAngle;
 	PwmOut* correspondingPwm;

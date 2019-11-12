@@ -13,7 +13,15 @@ public:
 	//adc points per degree
 	float unitsPerDegree = ADCResolution / totalAngleRange;
 
-	float currentAngle = 0;
+	float adcUsableRange = 1;
+
+	float adcAtNoTurn = 0;
+
+	unsigned short adcAtNoTurnAngleOffset = 0;
+
+	bool invertReading = false;
+
+	float averageAngle = 0;
 
 	float actuationPercentage = 0;
 	
@@ -29,9 +37,9 @@ public:
 		switch (pinName)
 		{
 		case ThrottleHALLEffect: {
-			totalAngleRange = 300;
+			totalAngleRange = 360;
 			usableAngleRange = 80;
-			startAngle = 30;
+			startAngle = 90;
 			unitsPerDegree = ADCResolution / totalAngleRange;
 			break;
 		}
@@ -43,17 +51,24 @@ public:
 			break;
 		}
 		case APPSOne: {
-			totalAngleRange = 300;
+			totalAngleRange = 225;
 			usableAngleRange = 80;
-			startAngle = 30;
-			unitsPerDegree = ADCResolution / totalAngleRange;
+			startAngle = 0;
+			adcUsableRange = 1;
+			adcAtNoTurn = 0;
+			adcAtNoTurnAngleOffset = adcAtNoTurn * ADCResolution;
+			unitsPerDegree = (ADCResolution*adcUsableRange) / totalAngleRange;
 			break;
 		}
 		case APPSTwo: {
-			totalAngleRange = 300;
+			totalAngleRange = 360;
 			usableAngleRange = 80;
-			startAngle = 30;
-			unitsPerDegree = ADCResolution / totalAngleRange;
+			startAngle = 0;
+			invertReading = true;
+			adcUsableRange = 0.8;
+			adcAtNoTurn = 0.10;
+			unitsPerDegree = (ADCResolution*adcUsableRange) / totalAngleRange;
+			adcAtNoTurnAngleOffset = adcAtNoTurn * ADCResolution;
 			break;
 		}
 		default:
