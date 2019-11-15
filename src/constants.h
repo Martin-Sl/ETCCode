@@ -1,8 +1,8 @@
 #pragma once
 #include <mbed.h>
 
-
-#define ImplausabilityIntervalMS 100
+#define ThrottleAngleRange 80
+#define ImplausabilityIntervalMS 50
 #define PositionMustBeReachedIn 500
 #define AngleTolerance (0.1)
 #define ADCResolution 65536

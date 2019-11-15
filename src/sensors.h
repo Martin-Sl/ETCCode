@@ -53,17 +53,18 @@ public:
 		case APPSOne: {
 			totalAngleRange = 225;
 			usableAngleRange = 80;
-			startAngle = 0;
+			startAngle = 90;
 			adcUsableRange = 1;
 			adcAtNoTurn = 0;
 			adcAtNoTurnAngleOffset = adcAtNoTurn * ADCResolution;
 			unitsPerDegree = (ADCResolution*adcUsableRange) / totalAngleRange;
+			invertReading = true;
 			break;
 		}
 		case APPSTwo: {
 			totalAngleRange = 360;
 			usableAngleRange = 80;
-			startAngle = 0;
+			startAngle = 90;
 			invertReading = true;
 			adcUsableRange = 0.8;
 			adcAtNoTurn = 0.10;

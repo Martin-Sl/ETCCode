@@ -3,8 +3,8 @@
 #include "sensors.h"
 #include "output.h"
 #define FeedbackSupport
-
 #define OnlyDoubleAPPSSensor
+
 
 #ifdef FeedbackSupport
 
@@ -20,10 +20,24 @@ Timer implausabilityTPSTimer;
 bool tpsPlausible = true;
 bool setAngleMatchesReal = true;
 #endif
+DigitalOut led(LED2);
 
+void ErrorHandling(){
+  led.write(1);
+  wait(0.1);
+  led.write(0);
+}
 
 bool CheckSensorPlausability(Sensor* sensor1, Sensor* sensor2){
-   if(abs((sensor1->actuationPercentage)-(sensor2->actuationPercentage)) > AngleTolerance){
+   //DifferenceChecking
+   volatile float difference = abs((sensor1->actuationPercentage)-(sensor2->actuationPercentage));
+   if(difference > AngleTolerance){
+     return false;
+   }
+   //RangeChecking
+   float apps1Percentage = sensor1->actuationPercentage;
+   float apps2Percentage = sensor2->actuationPercentage;
+   if(apps1Percentage < -AngleTolerance || apps1Percentage > 1+AngleTolerance || apps2Percentage < -AngleTolerance || apps2Percentage > 1+AngleTolerance){
      return false;
    }
    return true;
@@ -33,20 +47,21 @@ bool EntryIsPlausible(bool plausability, Timer* timerPointer, bool& timerRunning
   if(!plausability){
     if(timerRunning){
       if(timerPointer->read_ms() > errorMs){
+        timerRunning = false;
+        timerPointer->stop();
+        timerPointer->reset();
         return false;
       } 
     }
     else {
       timerRunning = true;
       timerPointer->start();
-      return true;
     }
   }
   else if (timerRunning){
     timerRunning = false;
     timerPointer->stop();
     timerPointer->reset();
-    return false;
   }
   return true;
 }
@@ -65,6 +80,8 @@ bool TimerErrors(){
 #endif
 
 int main() {
+
+
   AnalogIn appsPrimaryAnalog(APPSOne);
   Sensor appsPrimary(&appsPrimaryAnalog, APPSOne);
  
@@ -73,13 +90,13 @@ int main() {
   AnalogIn appsSecondaryAnalog(APPSTwo);
   Sensor appsSecondary(&appsSecondaryAnalog, APPSTwo);
 
-  #ifndef OnlyDoubleAPPSSensor
+#ifndef OnlyDoubleAPPSSensor
   AnalogIn feedbackPrimaryAnalog(ThrottlePotentiometer);
   Sensor feedbackPrimary(&feedbackPrimaryAnalog, ThrottlePotentiometer);
 
   AnalogIn feedbackSecondaryAnalog(ThrottleHALLEffect);
   Sensor feedbackSecondary(&feedbackSecondaryAnalog, ThrottleHALLEffect);
-  #endif
+#endif
 #endif
 
   PwmOut pwmOutput(PA_6);
@@ -96,13 +113,16 @@ int main() {
     float servoRealAngle = (feedbackPrimary.getCurrentAngle()+feedbackSecondary.getCurrentAngle())/2;
 #endif
     appsPlausible = CheckSensorPlausability(&appsPrimary, &appsSecondary);
-    #ifndef OnlyDoubleAPPSSensor
+#ifndef OnlyDoubleAPPSSensor
     tpsPlausible = CheckSensorPlausability(&appsPrimary, &appsSecondary);
     setAngleMatchesReal = (((servoSetAngle - servoRealAngle)/ThrottleAngleRange) < AngleTolerance);
 #endif
-    errorWithFeedbackSystem = TimerErrors();
-    
+    if(TimerErrors()){
 
+      ErrorHandling();
+      volatile float appsSecondaryAngleDEB = appsSecondaryAngle;
+      volatile float appsPrimaryAngleDEB = appsPrimaryAngle;
+    }
 #else
     float servoSetAngle = appsPrimaryAngle;
 
