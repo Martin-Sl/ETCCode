@@ -82,4 +82,8 @@ public:
 	unsigned short getAdcValue();
 
 	bool isInRange();
+
+	void calibrateZero();
+	
+	void calibrateFull();
 };

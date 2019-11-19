@@ -31,6 +31,8 @@ unsigned short Sensor::getAdcValue() {
 	return currentAdcValue;
 }
 
+
+
 bool Sensor::isInRange(){
 	if(averageAngle > 0 && averageAngle > usableAngleRange){
 		return true;

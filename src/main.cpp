@@ -1,18 +1,27 @@
 #include <mbed.h>
+#include <math.h>
 #include "constants.h"
 #include "sensors.h"
 #include "output.h"
+#include "throttleMapInteraction.h"
 #define FeedbackSupport
-#define OnlyDoubleAPPSSensor
+//#define OnlyDoubleAPPSSensor
+#define SingleAPPSTPSDebug
+#define FailiureLEDBlink true
 
+bool engineRunning = true;
+bool etcPower = true; 
+float servoSetAngle = 0;
 
 #ifdef FeedbackSupport
-
+#ifndef SingleAPPSTPSDebug
 bool implausabilityAPPSTimerRunning = false;
 Timer implausabilityAPPSTimer;
 bool appsPlausible = true;
+#endif
 bool errorWithFeedbackSystem = false;
 #ifndef OnlyDoubleAPPSSensor
+float realThrottlePercentage = 0;
 bool servoDelayTimerRunning = false;
 Timer servoDelayTimer;
 bool implausabilityTPSTimerRunning = false;
@@ -22,10 +31,42 @@ bool setAngleMatchesReal = true;
 #endif
 DigitalOut led(LED2);
 
-void ErrorHandling(){
-  led.write(1);
-  wait(0.1);
-  led.write(0);
+void LEDBlink(float seconds){
+  if(FailiureLEDBlink){
+    led.write(1);
+    wait(seconds);
+    led.write(0);
+  }
+}
+
+void ETCShutdown(int failiureStatus){
+  if(etcPower){
+    //ETC POWER SHUTDOWN CODE GOES HERE
+    LEDBlink(0.5);
+    etcPower = false;
+  }
+  else{
+    //STILL SHUT DOWN FROM PREVIOUS ERROR
+    LEDBlink(0.05);
+    etcPower = false;
+  }
+  //Is TPS Data TRUSTWORTHY
+  if(failiureStatus != TPSFailiure){
+    #ifndef OnlyDoubleAPPSSensor
+    if(realThrottlePercentage > AngleTolerance){
+      failiureStatus = TPSFailiure;
+    }
+    #endif
+  }
+  if(failiureStatus == TPSFailiure){
+    if(engineRunning){
+      //ENGINE SHUTDOWN CODE GOES HERE
+      LEDBlink(2);
+    }
+    else{
+      LEDBlink(0.2);
+    } 
+  }
 }
 
 bool CheckSensorPlausability(Sensor* sensor1, Sensor* sensor2){
@@ -35,9 +76,9 @@ bool CheckSensorPlausability(Sensor* sensor1, Sensor* sensor2){
      return false;
    }
    //RangeChecking
-   float apps1Percentage = sensor1->actuationPercentage;
-   float apps2Percentage = sensor2->actuationPercentage;
-   if(apps1Percentage < -AngleTolerance || apps1Percentage > 1+AngleTolerance || apps2Percentage < -AngleTolerance || apps2Percentage > 1+AngleTolerance){
+   float sensor1Percentage = sensor1->actuationPercentage;
+   float sensor2Percentage = sensor2->actuationPercentage;
+   if(sensor1Percentage < -AngleTolerance || sensor1Percentage > 1+AngleTolerance || sensor2Percentage < -AngleTolerance || sensor2Percentage > 1+AngleTolerance){
      return false;
    }
    return true;
@@ -47,9 +88,11 @@ bool EntryIsPlausible(bool plausability, Timer* timerPointer, bool& timerRunning
   if(!plausability){
     if(timerRunning){
       if(timerPointer->read_ms() > errorMs){
-        timerRunning = false;
-        timerPointer->stop();
-        timerPointer->reset();
+        if(FailiureLEDBlink){
+          timerRunning = false;
+          timerPointer->stop();
+          timerPointer->reset();
+        }
         return false;
       } 
     }
@@ -66,16 +109,30 @@ bool EntryIsPlausible(bool plausability, Timer* timerPointer, bool& timerRunning
   return true;
 }
 
-bool TimerErrors(){
+int TimerErrors(){
+  #ifndef SingleAPPSTPSDebug
   bool appsFine = EntryIsPlausible(appsPlausible, &implausabilityAPPSTimer, implausabilityAPPSTimerRunning, ImplausabilityIntervalMS);
+  #endif
   bool tpsFine = true;
   bool servoFine = true;
   #ifndef OnlyDoubleAPPSSensor
   tpsFine = EntryIsPlausible(tpsPlausible, &implausabilityTPSTimer, implausabilityTPSTimerRunning, ImplausabilityIntervalMS);
   servoFine = EntryIsPlausible(setAngleMatchesReal, &servoDelayTimer, servoDelayTimerRunning, PositionMustBeReachedIn);
   #endif
-  return !(appsFine&&tpsFine&&servoFine);
- 
+  #ifndef SingleAPPSTPSDebug
+  if(!(appsFine && servoFine)){
+    return APPSFailure;
+  }
+  #else
+  if(!(servoFine)){
+    return APPSFailure;
+  }
+  #endif
+  if(!tpsFine)
+  {
+    return TPSFailiure;
+  }
+  return 0;
 }
 #endif
 
@@ -86,10 +143,10 @@ int main() {
   Sensor appsPrimary(&appsPrimaryAnalog, APPSOne);
  
 #ifdef FeedbackSupport 
-  
+#ifndef SingleAPPSTPSDebug
   AnalogIn appsSecondaryAnalog(APPSTwo);
   Sensor appsSecondary(&appsSecondaryAnalog, APPSTwo);
-
+#endif
 #ifndef OnlyDoubleAPPSSensor
   AnalogIn feedbackPrimaryAnalog(ThrottlePotentiometer);
   Sensor feedbackPrimary(&feedbackPrimaryAnalog, ThrottlePotentiometer);
@@ -107,28 +164,39 @@ int main() {
     float appsPrimaryAngle = appsPrimary.getCurrentAngle();
 
 #ifdef FeedbackSupport
+#ifndef SingleAPPSTPSDebug
     float appsSecondaryAngle = appsSecondary.getCurrentAngle();
-    float servoSetAngle = (appsPrimaryAngle + appsSecondaryAngle)/2;
-#ifndef OnlyDoubleAPPSSensor
-    float servoRealAngle = (feedbackPrimary.getCurrentAngle()+feedbackSecondary.getCurrentAngle())/2;
-#endif
-    appsPlausible = CheckSensorPlausability(&appsPrimary, &appsSecondary);
-#ifndef OnlyDoubleAPPSSensor
-    tpsPlausible = CheckSensorPlausability(&appsPrimary, &appsSecondary);
-    setAngleMatchesReal = (((servoSetAngle - servoRealAngle)/ThrottleAngleRange) < AngleTolerance);
-#endif
-    if(TimerErrors()){
-
-      ErrorHandling();
-      volatile float appsSecondaryAngleDEB = appsSecondaryAngle;
-      volatile float appsPrimaryAngleDEB = appsPrimaryAngle;
-    }
+    servoSetAngle = (appsPrimaryAngle + appsSecondaryAngle)/2;
 #else
     float servoSetAngle = appsPrimaryAngle;
+#endif
+#ifndef OnlyDoubleAPPSSensor
+    float feedbackPrimaryAngle   = feedbackPrimary.getCurrentAngle();
+    float feedbackSecondaryAngle = feedbackSecondary.getCurrentAngle();
+    realThrottlePercentage = ((feedbackPrimaryAngle+feedbackSecondaryAngle)/2)/SERVO_RANGE;
+    
+#endif
+#ifndef SingleAPPSTPSDebug
+    appsPlausible = CheckSensorPlausability(&appsPrimary, &appsSecondary);
+#endif
+#ifndef OnlyDoubleAPPSSensor
+    tpsPlausible = CheckSensorPlausability(&feedbackPrimary, &feedbackSecondary);
+    setAngleMatchesReal = (((servoSetAngle - realThrottlePercentage*SERVO_RANGE)/ThrottleAngleRange) < AngleTolerance);
+#endif
+    int errorState = TimerErrors();
+    if(errorState != 0){
+      ETCShutdown(errorState);
+      //volatile float appsSecondaryAngleDEB = appsSecondaryAngle;
+      volatile float appsPrimaryAngleDEB = appsPrimaryAngle;
+      volatile float tpsUno = feedbackPrimaryAngle;
+      volatile float tpsDue = feedbackSecondaryAngle;
+    }
+#else
+    
 
 #endif
-    servoOut.setThrottleAngle(servoSetAngle);
-  
+    float setPercentage = min(0.0f, max((float)(servoSetAngle/SERVO_RANGE), 1.0f));
+    servoOut.setThrottlePercentage(interpolatedThrottle(setPercentage));
   }
 
 }

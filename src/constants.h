@@ -10,4 +10,6 @@
 #define ThrottlePotentiometer PB_0
 #define APPSOne PA_0
 #define APPSTwo PA_1
-#define ThrottleAngleRange 80
+#define TPSFailiure 2
+#define APPSFailure 1
+#define SERVOFailiure 1

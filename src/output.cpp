@@ -5,7 +5,7 @@ void CustomServoOutput::setThrottleAngle(float angle) {
 	servoAbsoluteAngle = angle + servoFullClosedAngle;
 	usValue = shortestPulse + servoAbsoluteAngle * conversionMultiplier;
 
-	if (angle > throttleAngleRange) {
+	if (angle > SERVO_RANGE) {
 		usValue = shortestPulse + servoFullOpenAngle * conversionMultiplier;
 
 	}
@@ -15,4 +15,8 @@ void CustomServoOutput::setThrottleAngle(float angle) {
 	}
 
 	correspondingPwm->pulsewidth_us(usValue);
+}
+
+void CustomServoOutput::setThrottlePercentage(float percentage){
+	setThrottleAngle(percentage * ThrottleAngleRange);
 }
