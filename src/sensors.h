@@ -83,6 +83,8 @@ public:
 
 	bool isInRange();
 
+	float getAbsoluteCalibrationAngle();
+
 	void calibrateZero();
 	
 	void calibrateFull();
