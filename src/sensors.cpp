@@ -40,3 +40,23 @@ bool Sensor::isInRange(){
 	return false;
 }
 
+float Sensor::getAbsoluteCalibrationAngle(){
+	//delay for the average to stabilize
+	for (int i = 0; i < 512; i++)
+	{
+		getAdcValue();
+	}
+	float averageAngle = ((averageAdcValue - adcAtNoTurnAngleOffset) / unitsPerDegree);
+	return averageAngle;
+}
+
+void Sensor::calibrateZero(){
+	float foundAngle = getAbsoluteCalibrationAngle();
+	startAngle = foundAngle;
+}
+
+void Sensor::calibrateFull(){
+	float foundAngle = getAbsoluteCalibrationAngle();
+	usableAngleRange = abs(foundAngle - startAngle);
+}
+
