@@ -3,35 +3,35 @@
 
 float Sensor::getCurrentAngle() {
 	getAdcValue();
-	if(invertReading){
-		averageAngle = totalAngleRange - ((averageAdcValue - adcAtNoTurnAngleOffset) / unitsPerDegree) - startAngle;
-	}
-	else{
-		averageAngle = ((averageAdcValue - adcAtNoTurnAngleOffset) / unitsPerDegree) - startAngle;
-	}
-	
+	averageAngle = convertAdcValueToAngle(averageAdcValue);
 #ifdef AngleDebug
-	volatile float currentAngle = 0;
-	if(invertReading){
-		currentAngle = totalAngleRange - ((currentAdcValue - adcAtNoTurnAngleOffset) / unitsPerDegree) - startAngle;;
-	}
-	else{
-		currentAngle = ((currentAdcValue - adcAtNoTurnAngleOffset) / unitsPerDegree) - startAngle;
-	}
-	
+	volatile float currentAngle = convertAdcValueToAngle(currentAdcValue);
 #endif
 	actuationPercentage = averageAngle/usableAngleRange;
 	return averageAngle;
 }
 
+float Sensor::getAngleWtihoutAveraging(){
+	currentAdcValue = myInputPin->read_u16();
+	convertAdcValueToAngle(currentAdcValue);
+	return currentAbsoluteAngle - startAngle;
+}
+
+float Sensor::convertAdcValueToAngle(float adcValue){
+	if(invertReading){
+		currentAbsoluteAngle = totalAngleRange - ((adcValue - adcAtNoTurnAngleOffset) / unitsPerDegree);
+	}
+	else{
+		currentAbsoluteAngle = ((adcValue - adcAtNoTurnAngleOffset) / unitsPerDegree);
+	}
+	return currentAbsoluteAngle - startAngle;
+}
+
 unsigned short Sensor::getAdcValue() {
 	currentAdcValue = myInputPin->read_u16();
 	averageAdcValue = (alpha * currentAdcValue) + (1.0 - alpha) * averageAdcValue;
-
 	return currentAdcValue;
 }
-
-
 
 bool Sensor::isInRange(){
 	if(averageAngle > 0 && averageAngle > usableAngleRange){
@@ -42,11 +42,7 @@ bool Sensor::isInRange(){
 
 float Sensor::getAbsoluteCalibrationAngle(){
 	//delay for the average to stabilize
-	for (int i = 0; i < 512; i++)
-	{
-		getAdcValue();
-	}
-	float averageAngle = ((averageAdcValue - adcAtNoTurnAngleOffset) / unitsPerDegree);
+	float averageAngle = getAngleWithoutNoise(512);	
 	return averageAngle;
 }
 
@@ -60,3 +56,10 @@ void Sensor::calibrateFull(){
 	usableAngleRange = abs(foundAngle - startAngle);
 }
 
+float Sensor::getAngleWithoutNoise(int measurements){
+	float angleWithoutNoise = getAngleWtihoutAveraging();
+	for (int i = measurements; i > 0; i--)
+	{
+		angleWithoutNoise =  (alpha * getAngleWtihoutAveraging()) + (1.0 - alpha) * angleWithoutNoise;
+	}
+}

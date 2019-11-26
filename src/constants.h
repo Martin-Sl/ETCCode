@@ -14,7 +14,7 @@
 #define APPSFailure 1
 #define SERVOFailiure 1
 #define FailiureLEDBlink true
-//#define FeedbackSupport
+#define FeedbackSupport
 #define OnlyDoubleAPPSSensor
 //#define SingleAPPSTPSDebug
 

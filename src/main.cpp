@@ -1,6 +1,7 @@
 #include <mbed.h>
 #include <math.h>
 #include "constants.h"
+#include "sensorDefinitions.h"
 #include "sensors.h"
 #include "output.h"
 #include "throttleMapInteraction.h"
@@ -9,15 +10,12 @@
 #include "buttonInput.h"
 #include "calibrationProcedure.h"
 
-
-
 float servoSetAngle = 0;
+
 int main() {
-
-
-  AnalogIn appsPrimaryAnalog(APPSOne);
-  Sensor appsPrimary(&appsPrimaryAnalog, APPSOne);
- 
+// AnalogIn appsPrimaryAnalog(APPSOne);
+// Sensor appsPrimary(&appsPrimaryAnalog, APPSOne);
+/*
 #ifdef FeedbackSupport 
 #ifndef SingleAPPSTPSDebug
   AnalogIn appsSecondaryAnalog(APPSTwo);
@@ -31,9 +29,13 @@ int main() {
   Sensor feedbackSecondary(&feedbackSecondaryAnalog, ThrottleHALLEffect);
 #endif
 #endif
-
-  PwmOut pwmOutput(PA_6);
-  CustomServoOutput servoOut(&pwmOutput);
+*/
+	//PwmOut pwmOutput(PA_6);
+	//CustomServoOutput servoOut(&pwmOutput);
+	PwmOut servoPWM(PA_6);
+	CustomServoOutput servoOutInstance(&servoPWM);
+	servoOut = &servoOutInstance;
+	
 
   while(1) {
     // put your main code here, to run repeatedly:
@@ -49,14 +51,14 @@ int main() {
 #ifndef OnlyDoubleAPPSSensor
     float feedbackPrimaryAngle   = feedbackPrimary.getCurrentAngle();
     float feedbackSecondaryAngle = feedbackSecondary.getCurrentAngle();
-    realThrottlePercentage = ((feedbackPrimaryAngle+feedbackSecondaryAngle)/2)/SERVO_RANGE;
+    realThrottlePercentage = ((feedbackPrimaryAngle+feedbackSecondaryAngle)/2)/servoOut->servoTotalAngle;
 #endif
 #ifndef SingleAPPSTPSDebug
     appsPlausible = CheckSensorPlausability(&appsPrimary, &appsSecondary);
 #endif
 #ifndef OnlyDoubleAPPSSensor
     tpsPlausible = CheckSensorPlausability(&feedbackPrimary, &feedbackSecondary);
-    setAngleMatchesReal = (((servoSetAngle - realThrottlePercentage*SERVO_RANGE)/ThrottleAngleRange) < AngleTolerance);
+    setAngleMatchesReal = (((servoSetAngle - realThrottlePercentage*servoOut->servoTotalAngle)/servoOut->throttleAngleRange) < AngleTolerance);
 #endif
     int errorState = TimerErrors();
     if(errorState != 0){
@@ -69,10 +71,9 @@ int main() {
 #else
     servoSetAngle = appsPrimaryAngle;
 #endif
-    calibrationChecker();
-    float setPercentage = min(0.0f, max((float)(servoSetAngle/servoOut.throttleAngleRange), 1.0f));
+    calibrationButtonChecker();
+    float setPercentage = min(0.0f, max((float)(servoSetAngle/servoOut->throttleAngleRange), 1.0f));
     //servoOut.setThrottlePercentage(interpolatedThrottle(setPercentage));
   }
-
 }
 

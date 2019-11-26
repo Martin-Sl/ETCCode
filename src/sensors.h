@@ -27,8 +27,10 @@ public:
 	
 	unsigned short currentAdcValue = 0;
 
+	float currentAbsoluteAngle = 0;
+
 	unsigned short averageAdcValue = 0;
-	float alpha = 0.1;
+	const float alpha = 0.1;
 
 	AnalogIn* myInputPin;
 	
@@ -84,6 +86,12 @@ public:
 	bool isInRange();
 
 	float getAbsoluteCalibrationAngle();
+
+	float getAngleWithoutNoise(int measurements);
+
+	float getAngleWtihoutAveraging();
+
+	float convertAdcValueToAngle(float adcValue);
 
 	void calibrateZero();
 	

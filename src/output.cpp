@@ -22,12 +22,10 @@ void CustomServoOutput::setThrottlePercentage(float percentage){
 }
 
 
-void CustomServoOutput::setMinimalPosition(){
-
-}
-
-void CustomServoOutput::setMaximalPosition(){
-
+void CustomServoOutput::uncheckedStep(float deltaAngle){
+	servoAbsoluteAngle += deltaAngle;
+	usValue = shortestPulse + servoAbsoluteAngle * conversionMultiplier;
+	correspondingPwm->pulsewidth_us(usValue);
 }
 
 void CustomServoOutput::setPositions(float minAngle, float angleRange){

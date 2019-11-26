@@ -5,12 +5,15 @@
 //#define resultAngle = ((microsecs-ShortestPulse)/(LongestPulse-ShortestPulse))*ServoAngle
 
 
+
+
+
 class CustomServoOutput {
 public:
 	unsigned short longestPulse = 2100;
 	unsigned short shortestPulse = 900;
+	//float servoTotalAngle = 135;
 	float servoTotalAngle = 135;
-	
 	float throttleAngleRange = 80;
 	float throttleIdleAngle = 40;
 	float throttleFullOpenAngle = throttleIdleAngle + throttleAngleRange;
@@ -28,9 +31,9 @@ public:
 
 	void setThrottlePercentage(float percentage);
 
-	void setMinimalPosition();
-
-	void setMaximalPosition();
+	void uncheckedStep(float deltaAngle);
 
 	void setPositions(float minAngle, float angleRange);
 };
+
+
