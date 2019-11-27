@@ -13,34 +13,11 @@
 float servoSetAngle = 0;
 
 int main() {
-// AnalogIn appsPrimaryAnalog(APPSOne);
-// Sensor appsPrimary(&appsPrimaryAnalog, APPSOne);
-/*
-#ifdef FeedbackSupport 
-#ifndef SingleAPPSTPSDebug
-  AnalogIn appsSecondaryAnalog(APPSTwo);
-  Sensor appsSecondary(&appsSecondaryAnalog, APPSTwo);
-#endif
-#ifndef OnlyDoubleAPPSSensor
-  AnalogIn feedbackPrimaryAnalog(ThrottlePotentiometer);
-  Sensor feedbackPrimary(&feedbackPrimaryAnalog, ThrottlePotentiometer);
-
-  AnalogIn feedbackSecondaryAnalog(ThrottleHALLEffect);
-  Sensor feedbackSecondary(&feedbackSecondaryAnalog, ThrottleHALLEffect);
-#endif
-#endif
-*/
-	//PwmOut pwmOutput(PA_6);
-	//CustomServoOutput servoOut(&pwmOutput);
 	PwmOut servoPWM(PA_6);
 	CustomServoOutput servoOutInstance(&servoPWM);
 	servoOut = &servoOutInstance;
-	
-
   while(1) {
-    // put your main code here, to run repeatedly:
     float appsPrimaryAngle = appsPrimary.getCurrentAngle();
-
 #ifdef FeedbackSupport
 #ifndef SingleAPPSTPSDebug
     float appsSecondaryAngle = appsSecondary.getCurrentAngle();
@@ -49,7 +26,9 @@ int main() {
     servoSetAngle = appsPrimaryAngle;
 #endif
     volatile float percentage = (float)servoSetAngle/(float)servoOut->throttleAngleRange;
-    volatile float setPercentage = min(1.0f, max((float)(percentage), 0.0f));
+    volatile float clampedPercentage = min(1.0f, max((float)(percentage), 0.0f));
+	volatile float setPercentage =  interpolatedThrottle(clampedPercentage);
+
 #ifndef OnlyDoubleAPPSSensor
     float feedbackPrimaryAngle   = feedbackPrimary.getCurrentAngle();
     float feedbackSecondaryAngle = feedbackSecondary.getCurrentAngle();
@@ -74,8 +53,6 @@ int main() {
 #else
     servoSetAngle = appsPrimaryAngle;
 #endif
-
-    
     servoOut->setThrottlePercentage((setPercentage));
   }
 }

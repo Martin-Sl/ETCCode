@@ -22,3 +22,4 @@
 #define SensorAndTPSCalibration
 
 #define DebugCodeSnippets
+#define OnlyIdleHoming
