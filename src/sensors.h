@@ -41,14 +41,18 @@ public:
 		case ThrottleHALLEffect: {
 			totalAngleRange = 360;
 			usableAngleRange = 80;
-			startAngle = 90;
+			startAngle = 90+156-9;
 			unitsPerDegree = ADCResolution / totalAngleRange;
 			break;
 		}
 		case ThrottlePotentiometer: {
-			totalAngleRange = 300;
+			totalAngleRange = 360;
 			usableAngleRange = 80;
-			startAngle = 30;
+			startAngle = 90+156-9;
+
+			// totalAngleRange = 300;
+			// usableAngleRange = 80;
+			// startAngle = 30;
 			unitsPerDegree = ADCResolution / totalAngleRange;
 			break;
 		}

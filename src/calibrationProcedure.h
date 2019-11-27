@@ -13,6 +13,8 @@ const float stepSafety = 2;
 DebounceIn buttonPin(CalibrationButton);
 ButtonInput calibrationButton(&buttonPin);
 
+#ifdef FeedbackSupport
+
 void calibrationButtonChecker(){
     calibrationButton.checkPresses();
     if(calibrationButton.wasButtonTriplePressed()){
@@ -46,4 +48,4 @@ void MoveUntilEndOfRange (){
 
 	}
 }
-
+#endif

@@ -29,7 +29,11 @@ float Sensor::convertAdcValueToAngle(float adcValue){
 
 unsigned short Sensor::getAdcValue() {
 	currentAdcValue = myInputPin->read_u16();
+	#ifdef ADCAveraging
 	averageAdcValue = (alpha * currentAdcValue) + (1.0 - alpha) * averageAdcValue;
+	#else
+	averageAdcValue = currentAdcValue;
+	#endif
 	return currentAdcValue;
 }
 

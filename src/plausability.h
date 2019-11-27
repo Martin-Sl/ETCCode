@@ -38,7 +38,10 @@ bool CheckSensorPlausability(Sensor* sensor1, Sensor* sensor2){
 bool EntryIsPlausible(bool plausability, Timer* timerPointer, bool& timerRunning, unsigned short errorMs){
   if(!plausability){
     if(timerRunning){
-      if(timerPointer->read_ms() > errorMs){
+      #ifdef DebugCodeSnippets
+      volatile int passedTime = timerPointer->read_ms();
+      #endif
+      if(passedTime > errorMs){
         if(FailiureLEDBlink){
           timerRunning = false;
           timerPointer->stop();

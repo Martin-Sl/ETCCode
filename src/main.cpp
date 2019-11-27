@@ -48,6 +48,8 @@ int main() {
 #else
     servoSetAngle = appsPrimaryAngle;
 #endif
+    volatile float percentage = (float)servoSetAngle/(float)servoOut->throttleAngleRange;
+    volatile float setPercentage = min(1.0f, max((float)(percentage), 0.0f));
 #ifndef OnlyDoubleAPPSSensor
     float feedbackPrimaryAngle   = feedbackPrimary.getCurrentAngle();
     float feedbackSecondaryAngle = feedbackSecondary.getCurrentAngle();
@@ -58,7 +60,7 @@ int main() {
 #endif
 #ifndef OnlyDoubleAPPSSensor
     tpsPlausible = CheckSensorPlausability(&feedbackPrimary, &feedbackSecondary);
-    setAngleMatchesReal = (((servoSetAngle - realThrottlePercentage*servoOut->servoTotalAngle)/servoOut->throttleAngleRange) < AngleTolerance);
+    setAngleMatchesReal = (((setPercentage - realThrottlePercentage)) < AngleTolerance);
 #endif
     int errorState = TimerErrors();
     if(errorState != 0){
@@ -68,12 +70,13 @@ int main() {
       // volatile float tpsUno = feedbackPrimaryAngle;
       // volatile float tpsDue = feedbackSecondaryAngle;
     }
+    calibrationButtonChecker();
 #else
     servoSetAngle = appsPrimaryAngle;
 #endif
-    calibrationButtonChecker();
-    float setPercentage = min(0.0f, max((float)(servoSetAngle/servoOut->throttleAngleRange), 1.0f));
-    //servoOut.setThrottlePercentage(interpolatedThrottle(setPercentage));
+
+    
+    servoOut->setThrottlePercentage((setPercentage));
   }
 }
 

@@ -2,7 +2,7 @@
 #include <mbed.h>
 
 #define ImplausabilityIntervalMS 50
-#define PositionMustBeReachedIn 500
+#define PositionMustBeReachedIn 300
 #define AngleTolerance (0.1)
 #define ADCResolution 65536
 #define ThrottleHALLEffect PA_4 
@@ -14,9 +14,10 @@
 #define APPSFailure 1
 #define SERVOFailiure 1
 #define FailiureLEDBlink true
+//#define ADCAveraging
 #define FeedbackSupport
-#define OnlyDoubleAPPSSensor
-//#define SingleAPPSTPSDebug
+//#define OnlyDoubleAPPSSensor
+#define SingleAPPSTPSDebug
 
 #define SensorAndTPSCalibration
 

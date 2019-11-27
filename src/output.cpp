@@ -7,7 +7,7 @@ void CustomServoOutput::setThrottleAngle(float angle) {
 //TODO: This isn't always necessary
 	if (angle > throttleAngleRange) {
 		usValue = shortestPulse + throttleFullOpenAngle * conversionMultiplier;
-
+	
 	}
 	if (angle < 0) {
 		usValue = shortestPulse + throttleIdleAngle * conversionMultiplier;
